@@ -1,0 +1,319 @@
+apiVersion: karpenter.k8s.aws/v1alpha1
+kind: AWSNodeTemplate
+metadata:
+  name: iomete-dp-5-ng
+spec:
+  subnetSelector:
+    karpenter.sh/discovery: iomete-dp-5
+  securityGroupSelector:
+    karpenter.sh/discovery: iomete-dp-5
+  tags:
+    karpenter.sh/discovery: iomete-dp-5
+    iomete.com/managed: "true"
+
+---
+
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: ng-provisioner
+spec:
+  requirements:
+    - key: karpenter.sh/capacity-type
+      operator: In
+      values: ["on-demand"]
+  providerRef:
+    name: iomete-dp-5-ng
+  ttlSecondsAfterEmpty: 30
+
+---
+
+apiVersion: karpenter.k8s.aws/v1alpha1
+kind: AWSNodeTemplate
+metadata:
+  name: driver
+spec:
+  subnetSelector:
+    karpenter.sh/discovery: iomete-dp-5
+  securityGroupSelector:
+    karpenter.sh/discovery: iomete-dp-5
+  tags:
+    karpenter.sh/discovery: iomete-dp-5
+    iomete.com/managed: "true"
+
+
+---
+
+apiVersion: karpenter.k8s.aws/v1alpha1
+kind: AWSNodeTemplate
+metadata:
+  name: executor
+spec:
+  subnetSelector:
+    karpenter.sh/discovery: iomete-dp-5
+  securityGroupSelector:
+    karpenter.sh/discovery: iomete-dp-5
+  tags:
+    karpenter.sh/discovery: iomete-dp-5
+    iomete.com/managed: "true"
+    iomete.com/terraform: "true"
+  userData: |
+    MIME-Version: 1.0
+    Content-Type: multipart/mixed; boundary="BOUNDARY"
+
+    --BOUNDARY
+    Content-Type: text/x-shellscript; charset="us-ascii"
+
+    #!/bin/bash
+    if [[ $(lsblk | grep 'nvme1n1')   ]]; then
+    IDX=1
+    for DEV in /dev/disk/by-id/nvme-Amazon_EC2_NVMe_Instance_Storage_*-ns-1; do  mkfs.xfs $DEV;mkdir -p /local$IDX;echo $DEV /local$IDX xfs defaults,noatime 1 2 >> /etc/fstab; IDX=$(($IDX + 1)); done
+    mount -a
+    else
+    echo "Selected non-disk ec2 type"
+    fi
+
+    --BOUNDARY--
+
+---
+
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: driver-small
+spec:
+  labels:
+    k8s.iomete.com/node-purpose: driver-small
+  providerRef:
+    name: driver
+  requirements:
+    - key: node.kubernetes.io/instance-type
+      operator: In
+      values: [ "r6g.medium", "r7g.medium", "r6gd.medium", "r7gd.medium", "r7a.medium" ]
+    - key: kubernetes.io/arch
+      operator: In
+      values: [ amd64, arm64 ]
+    - key: karpenter.sh/capacity-type
+      operator: In
+      values: [ on-demand ]
+  taints:
+    - effect: NoSchedule
+      key: k8s.iomete.com/dedicated
+      value: driver-small
+  ttlSecondsAfterEmpty: 120
+  
+---
+
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: driver-medium
+spec:
+  labels:
+    k8s.iomete.com/node-purpose: driver-medium
+  providerRef:
+    name: driver
+  requirements:
+    - key: node.kubernetes.io/instance-type
+      operator: In
+      values: [ "r7g.large", "r7gd.large", "r6g.large", "r6gd.large", "r5.large", "r5d.large" ]
+    - key: kubernetes.io/arch
+      operator: In
+      values: [ amd64, arm64 ]
+    - key: karpenter.sh/capacity-type
+      operator: In
+      values: [ on-demand ]
+  taints:
+    - effect: NoSchedule
+      key: k8s.iomete.com/dedicated
+      value: driver-medium
+  ttlSecondsAfterEmpty: 120
+
+---
+
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: driver-large
+spec:
+  labels:
+    k8s.iomete.com/node-purpose: driver-large
+  providerRef:
+    name: driver
+  requirements:
+    - key: node.kubernetes.io/instance-type
+      operator: In
+      values: [ "r6g.xlarge", "r7g.xlarge", "r6gd.xlarge", "r7gd.xlarge", "r5.xlarge", "r5d.xlarge" ]
+    - key: kubernetes.io/arch
+      operator: In
+      values: [ amd64, arm64 ]
+    - key: karpenter.sh/capacity-type
+      operator: In
+      values: [ on-demand ]
+  taints:
+    - effect: NoSchedule
+      key: k8s.iomete.com/dedicated
+      value: driver-large
+  ttlSecondsAfterEmpty: 120
+
+---
+
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: exec-small
+spec:
+  labels:
+    k8s.iomete.com/node-purpose: exec-small
+  providerRef:
+    name: driver
+  requirements:
+    - key: node.kubernetes.io/instance-type
+      operator: In
+      values: [ "r7gd.large", "r6gd.large", "r5d.large" ]
+    - key: kubernetes.io/arch
+      operator: In
+      values: [ amd64, arm64 ]
+    - key: karpenter.sh/capacity-type
+      operator: In
+      values: [ on-demand ]
+  taints:
+    - effect: NoSchedule
+      key: k8s.iomete.com/dedicated
+      value: exec-small
+  ttlSecondsAfterEmpty: 120
+
+---
+
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: exec-medium
+spec:
+  labels:
+    k8s.iomete.com/node-purpose: exec-medium
+  providerRef:
+    name: driver
+  requirements:
+    - key: node.kubernetes.io/instance-type
+      operator: In
+      values: [ "r7gd.2xlarge", "r6gd.2xlarge", "r5d.2xlarge" ]
+    - key: kubernetes.io/arch
+      operator: In
+      values: [ amd64, arm64 ]
+    - key: karpenter.sh/capacity-type
+      operator: In
+      values: [ on-demand ]
+  taints:
+    - effect: NoSchedule
+      key: k8s.iomete.com/dedicated
+      value: exec-medium
+  ttlSecondsAfterEmpty: 120
+
+---
+
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: exec-large
+spec:
+  labels:
+    k8s.iomete.com/node-purpose: exec-large
+  providerRef:
+    name: driver
+  requirements:
+    - key: node.kubernetes.io/instance-type
+      operator: In
+      values: [ "r7gd.4xlarge", "r6gd.4xlarge", "r5d.4xlarge" ]
+    - key: kubernetes.io/arch
+      operator: In
+      values: [ amd64, arm64 ]
+    - key: karpenter.sh/capacity-type
+      operator: In
+      values: [ on-demand ]
+  taints:
+    - effect: NoSchedule
+      key: k8s.iomete.com/dedicated
+      value: exec-large
+  ttlSecondsAfterEmpty: 120
+
+---
+
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: exec-small--spot
+spec:
+  labels:
+    k8s.iomete.com/node-purpose: exec-small--spot
+  providerRef:
+    name: driver
+  requirements:
+    - key: node.kubernetes.io/instance-type
+      operator: In
+      values: [ "r7gd.large", "r6gd.large", "r5d.large" ]
+    - key: kubernetes.io/arch
+      operator: In
+      values: [ amd64, arm64 ]
+    - key: karpenter.sh/capacity-type
+      operator: In
+      values: [ spot, on-demand ]
+  taints:
+    - effect: NoSchedule
+      key: k8s.iomete.com/dedicated
+      value: exec-small--spot
+  ttlSecondsAfterEmpty: 120
+
+---
+
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: exec-medium--spot
+spec:
+  labels:
+    k8s.iomete.com/node-purpose: exec-medium--spot
+  providerRef:
+    name: driver
+  requirements:
+    - key: node.kubernetes.io/instance-type
+      operator: In
+      values: [ "r7gd.2xlarge", "r6gd.2xlarge", "r5d.2xlarge" ]
+    - key: kubernetes.io/arch
+      operator: In
+      values: [ amd64, arm64 ]
+    - key: karpenter.sh/capacity-type
+      operator: In
+      values: [ spot, on-demand ]
+  taints:
+    - effect: NoSchedule
+      key: k8s.iomete.com/dedicated
+      value: exec-medium--spot
+  ttlSecondsAfterEmpty: 120
+
+---
+
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: exec-large--spot
+spec:
+  labels:
+    k8s.iomete.com/node-purpose: exec-large--spot
+  providerRef:
+    name: driver
+  requirements:
+    - key: node.kubernetes.io/instance-type
+      operator: In
+      values: [ "r7gd.4xlarge", "r6gd.4xlarge", "r5d.4xlarge" ]
+    - key: kubernetes.io/arch
+      operator: In
+      values: [ amd64, arm64 ]
+    - key: karpenter.sh/capacity-type
+      operator: In
+      values: [ spot, on-demand ]
+  taints:
+    - effect: NoSchedule
+      key: k8s.iomete.com/dedicated
+      value: exec-large--spot
+  ttlSecondsAfterEmpty: 120

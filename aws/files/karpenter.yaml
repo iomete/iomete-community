@@ -1,0 +1,28 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: karpenter
+  namespace: karpenter
+spec:
+  interval: 5m
+  releaseName: karpenter
+  chart:
+     spec:
+      chart: karpenter
+      version: "v0.19.3"
+      sourceRef:
+        kind: HelmRepository
+        name: iomete
+        namespace: iomete
+  values:
+    serviceAccount:
+      annotations:
+        "eks.amazonaws.com/role-arn": "arn:aws:iam::680330367469:role/KarpenterIRSA-iomete-dp-5-20240101173830146600000008"
+    settings:
+      aws:
+        clusterName: "iomete-dp-5"
+        clusterEndpoint: "https://5FA5B10D98E3EB9EBC96A2BB645AB073.gr7.us-east-1.eks.amazonaws.com"
+        defaultInstanceProfile: "Karpenter-iomete-dp-5-2024010117402885880000000f"
+        interruptionQueueName: "Karpenter-iomete-dp-5"
+        vmMemoryOverheadPercent: 0.045
+    replicas: 1
