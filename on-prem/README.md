@@ -57,9 +57,6 @@ alias aws='aws --endpoint-url http://192.168.49.2:31128'
 aws s3 mb s3://lakehouse
 aws s3 mb s3://assets
 
-# create `spark-history` folder in assets bucket
-aws s3api put-object --bucket assets --key spark-history/ --content-length 0
-
 # verify buckets
 aws s3 ls
 ```
@@ -106,7 +103,7 @@ kubectl apply -n iomete -f files/iomete-helm-repo.yaml
 ```
 
 
-### 4. Deploy ISTIO
+### 4. Deploy ISTIO Ingress
 
 ```shell
 kubectl apply -n iomete -f files/istio.yaml
@@ -132,31 +129,9 @@ helm uninstall mysql
 helm upgrade --install -n iomete iomete-dataplane iomete/iomete-dataplane -f files/data-plane-values.yaml --version 1.4.0
 ```
 
-### 7. Control Plane Configuration
-
-Skip this step if using single data-plane instance.
-
-If you have enabled the `controlPlane.enabled` in the `data-plane-values.yaml` file, you need to manually configure the control plane. Otherwise, skip this step.  
-  
-After installing data-plane instances and configuring DNS, connect to your mysql instance and insert the following record in the `iomete_control_plane_db` database. You should insert a record for each data-plane instance. For example if you have 2 data-plane instances, you should insert 2 records.
-
-```sql
-insert into iomete_control_plane_db.data_plane (id, name, cloud, region, endpoint) 
-values ('1', 'data-plane-name', 'on-prem', 'us-east-1', 'https://data-plane-dns.company.com');
-
-insert into iomete_control_plane_db.data_plane (id, name, cloud, region, endpoint) 
-values ('2', 'data-plane-2-name', 'on-prem', 'us-east-1', 'https://data-plane-2-dns.company.com');
-```
-
-| Column   | Description                     |
-| -------- | ------------------------------- |
-| id       | Unique ID                       |
-| name     | Data Plane display name         |
-| cloud    | Cloud provider                  |
-| region   | Region, `us-east-1` for on-prem |
-| endpoint | Data-plane host                 |
 
 
+---
 ### 8. DNS Configuration
 
 To configure the DNS for your data-plane instance, you need to retrieve the external IP address. 

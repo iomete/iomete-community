@@ -1,7 +1,3 @@
-cloud:
-  provider: on-prem
-  region: us-east
-
 dataPlane:
   adminUser:
     username: "admin"
@@ -30,7 +26,6 @@ keycloak:
   adminPasswordSecret: {}
     # name: secret-name
     # key: password
-  endpoint: "http://keycloak-http/auth"
 
 storage:
   catalogs:
@@ -39,6 +34,7 @@ storage:
   assetsBucketName: "assets"
   # minio, dell_ecs, aws_s3, gcs, azure_gen1, azure_gen2
   type: "minio"
+  dellEcsSettings: {} # same as minioSettings
   minioSettings:
     endpoint: "http://minio.default.svc.cluster.local:9000"
     accessKey: "admin"
@@ -75,31 +71,3 @@ database:
 
 
 clusterDomain: cluster.local
-
-ranger:
-  enabled: false
-
-# Enabled if you have multiple data-planes, and you need control-plane for SSO and other features
-controlPlane:
-  enabled: false
-  
-  # You can use the same database as data-plane, or use separate database
-  database: {}
-    # host: "mysql"
-    # port: "3306"
-    # user: "iomete_user"
-    # password: "iomete_pass"
-    # # if passwordSecret is set, the password will be read from the secret
-    # passwordSecret: {}
-    #   # name: byo-db-creds
-    #   # key: password
-    # prefix: "iomete_" # all IOMETE databases should be prefixed with this. See database init script.
-    #
-    # # Provide database admin credentials to create the IOMETE databases, otherwise please run the database init script manually.
-    # adminCredentials: {}
-    #   # user: "root"
-    #   # password: "onXB8UbEqYzkQFgbXe8F#C5ckmyKix&"
-    #   # # if passwordSecret is set, the password will be read from the secret
-    #   # passwordSecret: {}
-    #   #   # name: byo-db-creds
-    #   #   # key: password
