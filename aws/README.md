@@ -3,6 +3,8 @@ Community Version of IOMETE Data-Plane
 
 ## Terraform
 
+Reference: https://registry.terraform.io/modules/iomete/data-plane-aws/aws/2.1.1
+
 1. Update values in terraform
 2. Run terraform
 

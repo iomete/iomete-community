@@ -22,7 +22,7 @@ kubectl get node
 ```
 In some cases, you might see error like `WARN[0000] Unable to read /etc/rancher/k3s/k3s.yaml, please start server with ...` then run the following command to provide read access K3S's kube config file:
 ```shell
-sudo chmod 644 /etc/rancher/k3s/k3s.yaml
+sudo chmod 600 /etc/rancher/k3s/k3s.yaml
 ```
 
 

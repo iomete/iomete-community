@@ -50,9 +50,12 @@ export AWS_ACCESS_KEY_ID=admin
 export AWS_SECRET_ACCESS_KEY=password
 export AWS_REGION=us-east-1
 
+#sudo dnf install awscli
 # override aws cli endpoint to point to minio
-alias aws='aws --endpoint-url http://192.168.49.2:31128'
+# Minio's S3 API Node port is: 31128
+alias aws='aws --endpoint-url http://localhost:31128' 
 
+# https://docs.aws.amazon.com/cli/latest/reference/s3/
 # create s3 bucket
 aws s3 mb s3://lakehouse
 aws s3 mb s3://assets
